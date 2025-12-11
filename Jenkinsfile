@@ -89,12 +89,10 @@ pipeline {
             steps {
                 script {
                     // We stick with your TCP config if that is how your Docker Desktop is set up
-                    docker.withServer('tcp://localhost:2375') {
-                        // Notice I added the tag to the build command to be safe
+                    docker.withServer('npipe://./pipe/docker_engine') {
                         def dockerImage = docker.build("${DOCKER_IMAGE}:latest", "--no-cache .")
-                        
                         docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
-                            dockerImage.push('latest')
+                             dockerImage.push('latest')
                         }
                     }
                 }
