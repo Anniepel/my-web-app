@@ -1,18 +1,20 @@
 pipeline {
-    agent any   // Runs on any available agent
+    agent any
+
     stages {
         stage('Build') {
             steps {
                 echo "Building the project..."
-                sh 'ls -la' // Linux/macOS
-                // Windows: bat 'dir'
+                bat 'dir'
             }
         }
+
         stage('Test') {
             steps {
                 echo "Running tests..."
             }
         }
+
         stage('Deploy') {
             steps {
                 echo "Deploying..."
