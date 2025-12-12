@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = 'anniepel/my-web-app'
-        DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
+        DOCKER_CREDENTIALS_ID = 'docker-hub-credentials' // Make sure this matches your Jenkins credentials ID
     }
 
     stages {
@@ -18,25 +18,28 @@ pipeline {
         stage('Build Project') {
             steps {
                 echo "Building the project..."
-                bat 'dir'
+                bat 'dir'  // For Windows agent
+                // If you need npm build, uncomment below
+                // bat 'npm install'
+                // bat 'npm run build'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.withServer('tcp://localhost:2375') {
+                    echo "Building Docker image..."
+                    bat "docker build -t ${DOCKER_IMAGE}:latest ."
+                }
+            }
+        }
 
-                        echo "Building Docker image..."
-                        def dockerImage = docker.build("${DOCKER_IMAGE}:latest")
-
-                        withDockerRegistry([ 
-                            credentialsId: "${DOCKER_CREDENTIALS_ID}", 
-                            url: 'https://index.docker.io/v1/' 
-                        ]) {
-                            echo "Pushing image to Docker Hub..."
-                            dockerImage.push("latest")
-                        }
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    echo "Logging in and pushing Docker image..."
+                    withDockerRegistry(credentialsId: "${DOCKER_CREDENTIALS_ID}", url: 'https://index.docker.io/v1/') {
+                        bat "docker push ${DOCKER_IMAGE}:latest"
                     }
                 }
             }
@@ -44,24 +47,17 @@ pipeline {
 
         stage('Deploy to Local Docker') {
             steps {
-                echo "Deploying container locally..."
-                bat """
-                    docker stop my-web-app || echo Not running
-                    docker rm -f my-web-app || echo None to remove
-                    docker run -d --name my-web-app -p 8090:3000 ${DOCKER_IMAGE}:latest
-                """
+                echo "Deploy stage (add your deploy steps here)"
             }
         }
     }
 
     post {
         success {
-            echo "Pipeline completed successfully!"
+            echo "Pipeline succeeded!"
         }
         failure {
             echo "Pipeline failed! Check logs."
         }
     }
 }
-
-
