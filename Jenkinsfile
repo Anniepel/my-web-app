@@ -30,9 +30,8 @@ pipeline {
                         echo "Building Docker image..."
                         def dockerImage = docker.build("${DOCKER_IMAGE}:latest", "--no-cache .")
                         
-                        docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
-                            echo "Pushing Docker image to Docker Hub..."
-                            dockerImage.push('latest')
+                        withDockerRegistry([ credentialsId: 'dockerhub-creds', url: 'https://index.docker.io/v1/' ]) {
+                            sh 'docker push anniepel/my-web-app:latest'
                         }
                     }
                 }
