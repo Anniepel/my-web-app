@@ -31,7 +31,8 @@ pipeline {
                         def dockerImage = docker.build("${DOCKER_IMAGE}:latest", "--no-cache .")
                         
                         withDockerRegistry([ credentialsId: 'dockerhub-creds', url: 'https://index.docker.io/v1/' ]) {
-                            sh 'docker push anniepel/my-web-app:latest'
+                            bat 'docker push anniepel/my-web-app:latest'
+
                         }
                     }
                 }
