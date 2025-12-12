@@ -18,21 +18,24 @@ pipeline {
         stage('Build Project') {
             steps {
                 echo "Building the project..."
-                bat 'dir'   // for Windows agent
-                // Add npm build/test commands if needed
+                bat 'dir'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.withServer('tcp://localhost:2375') { // or use npipe if Docker Desktop uses named pipe
-                        echo "Building Docker image..."
-                        def dockerImage = docker.build("${DOCKER_IMAGE}:latest", "--no-cache .")
-                        
-                        withDockerRegistry([ credentialsId: 'dockerhub-creds', url: 'https://index.docker.io/v1/' ]) {
-                            bat 'docker push anniepel/my-web-app:latest'
+                    docker.withServer('tcp://localhost:2375') {
 
+                        echo "Building Docker image..."
+                        def dockerImage = docker.build("${DOCKER_IMAGE}:latest")
+
+                        withDockerRegistry([ 
+                            credentialsId: "${DOCKER_CREDENTIALS_ID}", 
+                            url: 'https://index.docker.io/v1/' 
+                        ]) {
+                            echo "Pushing image to Docker Hub..."
+                            dockerImage.push("latest")
                         }
                     }
                 }
@@ -43,8 +46,8 @@ pipeline {
             steps {
                 echo "Deploying container locally..."
                 bat """
-                    docker stop my-web-app || echo "Container not running"
-                    docker rm -f my-web-app || echo "No container to remove"
+                    docker stop my-web-app || echo Not running
+                    docker rm -f my-web-app || echo None to remove
                     docker run -d --name my-web-app -p 8090:3000 ${DOCKER_IMAGE}:latest
                 """
             }
@@ -60,4 +63,5 @@ pipeline {
         }
     }
 }
+
 
