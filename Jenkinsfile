@@ -1,63 +1,43 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_IMAGE = 'anniepel/my-web-app'
-        DOCKER_CREDENTIALS_ID = 'docker-hub-credentials' // Make sure this matches your Jenkins credentials ID
-    }
-
     stages {
-
-        stage('Checkout') {
+        stage('Checkout SCM') {
             steps {
-                echo "Cloning repository..."
                 checkout scm
             }
         }
 
         stage('Build Project') {
             steps {
-                echo "Building the project..."
-                bat 'dir'  // For Windows agent
-                // If you need npm build, uncomment below
-                // bat 'npm install'
-                // bat 'npm run build'
+                echo 'Building the project...'
+                bat 'dir'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    echo "Building Docker image..."
-                    bat "docker build -t ${DOCKER_IMAGE}:latest ."
-                }
+                echo 'Building Docker image...'
+                bat 'docker build -t anniepel/my-web-app:latest .'
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                script {
-                    echo "Logging in and pushing Docker image..."
-                    withDockerRegistry(credentialsId: "${DOCKER_CREDENTIALS_ID}", url: 'https://index.docker.io/v1/') {
-                        bat "docker push ${DOCKER_IMAGE}:latest"
-                    }
+                echo 'Logging in and pushing Docker image...'
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds',
+                        usernameVariable: 'USERNAME',
+                        passwordVariable: 'PASSWORD')]) {
+                    bat "docker login -u %USERNAME% -p %PASSWORD% https://index.docker.io/v1/"
+                    bat "docker push anniepel/my-web-app:latest"
                 }
-            }
-        }
-
-        stage('Deploy to Local Docker') {
-            steps {
-                echo "Deploy stage (add your deploy steps here)"
             }
         }
     }
 
     post {
-        success {
-            echo "Pipeline succeeded!"
-        }
         failure {
-            echo "Pipeline failed! Check logs."
+            echo 'Pipeline failed! Check logs.'
         }
     }
 }
